@@ -1,0 +1,115 @@
+#!/bin/sh
+
+# Copyright (C) Igor Sysoev
+# Copyright (C) Nginx, Inc.
+
+# options 脚 本 会 定 义 后 续 工 作 将 要 用 到 的 变 量, 然 后 根 据 本 次 参 数 以 及 默 认 值 设 置 这 些 变 量
+. auto/options
+# init 脚 本 初 始 化 后 续 将 产 生 的 文 件 路 径
+. auto/init
+# sources 脚 本 将 分 析 Nginx 源 码 结 构 , 这 样 才 能 构 造 后 续 的 Makefile 文 件
+. auto/sources
+
+test -d $NGX_OBJS || mkdir $NGX_OBJS
+
+echo > $NGX_AUTO_HEADERS_H
+echo > $NGX_AUTOCONF_ERR
+
+echo "#define NGX_CONFIGURE \"$NGX_CONFIGURE\"" > $NGX_AUTO_CONFIG_H
+
+# DEBUG 标 志, 如 果 有 会 写 入 objs/ngx_auto_config.h
+if [ $NGX_DEBUG = YES ]; then
+    have=NGX_DEBUG . auto/have
+fi
+
+# 检 查 操 作 系 统 参 数 是 否 支 持 后 续 编 译
+if test -z "$NGX_PLATFORM"; then
+    echo "checking for OS"
+    # OS 名 称
+    NGX_SYSTEM=`uname -s 2>/dev/null
+    # 内 核 版 本`
+    NGX_RELEASE=`uname -r 2>/dev/null`
+    # 32/64 位 内 核
+    NGX_MACHINE=`uname -m 2>/dev/null`
+
+    echo " + $NGX_SYSTEM $NGX_RELEASE $NGX_MACHINE"
+
+    NGX_PLATFORM="$NGX_SYSTEM:$NGX_RELEASE:$NGX_MACHINE";
+
+    case "$NGX_SYSTEM" in
+        MINGW32_*)
+            NGX_PLATFORM=win32
+        ;;
+    esac
+
+else
+    echo "building for $NGX_PLATFORM"
+    NGX_SYSTEM=$NGX_PLATFORM
+fi
+
+# 检 查 并 设 置 编 译 器, 如 GCC 是 否 安 装, GCC 是 否 支 持 后 续 编 译
+. auto/cc/conf
+
+# 对 非 Windows 操 作 系 统 定 义 一 些 必 要 的 头 文 件, 并 检 查 其 是 否 存 在, 以 此 决 定 configure 后 续 步 骤 是 否 可 以 成 功
+if [ "$NGX_PLATFORM" != win32 ]; then
+    . auto/headers
+fi
+
+# 对 于 当 前 操 作 系 统, 定 义 一 些 特 定 的 操 作 系 统 相 关 的 方 法 并 坚 持 当 前 环 境 是 否 支 持. 例 如, 低 于 Lixnux, 在 这 里 使 用 sched_setaffinity 设 置 进 程 优 先 级, 使 用 Linux 特 有 的 sendfile 系 统 调 用 来 加 速 向 网 络 中 发 送 文 件 快
+. auto/os/conf
+
+if [ "$NGX_PLATFORM" != win32 ]; then
+    . auto/unix
+fi
+
+. auto/modules
+. auto/lib/conf
+
+case ".$NGX_PREFIX" in
+    .)
+        NGX_PREFIX=${NGX_PREFIX:-/usr/local/nginx}
+        have=NGX_PREFIX value="\"$NGX_PREFIX/\"" . auto/define
+    ;;
+
+    .!)
+        NGX_PREFIX=
+    ;;
+
+    *)
+        have=NGX_PREFIX value="\"$NGX_PREFIX/\"" . auto/define
+    ;;
+esac
+
+if [ ".$NGX_CONF_PREFIX" != "." ]; then
+    have=NGX_CONF_PREFIX value="\"$NGX_CONF_PREFIX/\"" . auto/define
+fi
+
+have=NGX_SBIN_PATH value="\"$NGX_SBIN_PATH\"" . auto/define
+have=NGX_CONF_PATH value="\"$NGX_CONF_PATH\"" . auto/define
+have=NGX_PID_PATH value="\"$NGX_PID_PATH\"" . auto/define
+have=NGX_LOCK_PATH value="\"$NGX_LOCK_PATH\"" . auto/define
+have=NGX_ERROR_LOG_PATH value="\"$NGX_ERROR_LOG_PATH\"" . auto/define
+
+have=NGX_HTTP_LOG_PATH value="\"$NGX_HTTP_LOG_PATH\"" . auto/define
+have=NGX_HTTP_CLIENT_TEMP_PATH value="\"$NGX_HTTP_CLIENT_TEMP_PATH\""
+. auto/define
+have=NGX_HTTP_PROXY_TEMP_PATH value="\"$NGX_HTTP_PROXY_TEMP_PATH\""
+. auto/define
+have=NGX_HTTP_FASTCGI_TEMP_PATH value="\"$NGX_HTTP_FASTCGI_TEMP_PATH\""
+. auto/define
+have=NGX_HTTP_UWSGI_TEMP_PATH value="\"$NGX_HTTP_UWSGI_TEMP_PATH\""
+. auto/define
+have=NGX_HTTP_SCGI_TEMP_PATH value="\"$NGX_HTTP_SCGI_TEMP_PATH\""
+. auto/define
+
+. auto/make
+. auto/lib/make
+. auto/install
+
+# STUB
+. auto/stubs
+
+have=NGX_USER value="\"$NGX_USER\"" . auto/define
+have=NGX_GROUP value="\"$NGX_GROUP\"" . auto/define
+
+. auto/summary
