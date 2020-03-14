@@ -58,13 +58,17 @@ fi
 # 对 于 当 前 操 作 系 统, 定 义 一 些 特 定 的 操 作 系 统 相 关 的 方 法 并 坚 持 当 前 环 境 是 否 支 持. 例 如, 低 于 Lixnux, 在 这 里 使 用 sched_setaffinity 设 置 进 程 优 先 级, 使 用 Linux 特 有 的 sendfile 系 统 调 用 来 加 速 向 网 络 中 发 送 文 件 快
 . auto/os/conf
 
+# 定 义 类 UNIX 系 统 中 通 用 的 头 文 件 和 系 统 调 用 等, 并 检 查 当 前 环 境 是 否 支 持
 if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/unix
 fi
 
+# 最 核 心 的 构 造 运 行 期 modules 的 脚 本, 它 将 会 生 成 ngx_modules.c 文 件, 这 个 文 件 会 被 编 译 进 Nginx 中, 它 所 做 的 唯 一 事 情 就 是 定 义 了 ngx_modules 数 组
 . auto/modules
+# conf 脚 本 用 来 检 查 Nginx 在 连 接 期 间 需 要 连 接 的 第 三 方 静 态 库, 动 态 库 或 者 目 标 文 件 是 否 存 在
 . auto/lib/conf
 
+# 处 理 Nginx 安 装 后 的 路 径
 case ".$NGX_PREFIX" in
     .)
         NGX_PREFIX=${NGX_PREFIX:-/usr/local/nginx}
@@ -80,10 +84,12 @@ case ".$NGX_PREFIX" in
     ;;
 esac
 
+# 处 理 Nginx 安 装 后 conf 文 件 的 路 径
 if [ ".$NGX_CONF_PREFIX" != "." ]; then
     have=NGX_CONF_PREFIX value="\"$NGX_CONF_PREFIX/\"" . auto/define
 fi
 
+# 处 理 Nginx 安 装 后, 二 进 制 文 件, pid, lock 等 其 他 文 件 的 路 径
 have=NGX_SBIN_PATH value="\"$NGX_SBIN_PATH\"" . auto/define
 have=NGX_CONF_PATH value="\"$NGX_CONF_PATH\"" . auto/define
 have=NGX_PID_PATH value="\"$NGX_PID_PATH\"" . auto/define
@@ -102,14 +108,20 @@ have=NGX_HTTP_UWSGI_TEMP_PATH value="\"$NGX_HTTP_UWSGI_TEMP_PATH\""
 have=NGX_HTTP_SCGI_TEMP_PATH value="\"$NGX_HTTP_SCGI_TEMP_PATH\""
 . auto/define
 
+# 创 建 编 译 时 使 用 的 objs/Makefile 文 件
 . auto/make
+# 为 objs/Makefile 加 入 需 要 连 接 的 第 三 方 静 态 库, 动 态 库 或 者 目 标 文 件
 . auto/lib/make
+# 为 objs/Makefile 加 入 install 功 能, 当 执 行 make install 时 将 编 译 生 成 的 必 要 文 件 复 制 到 安 装 路 径, 建 立 必 要 的 目 录
 . auto/install
 
 # STUB
+# 在 ngx_auto_config.h 文 件 中 加 入 NGX_SUPPRESS_WARN 宏, NGX_SMP 宏
 . auto/stubs
 
+# 在 ngx_auto_config.h 文 件 中 指 定 NGX_USER 和 NGX_GROUP 宏, 如 果 执 行 configure 时 没 有 参 数 指 定, 默 认 两 者 皆 为 nobody(默 认 以 nobody 用 户 运 行 进 程)
 have=NGX_USER value="\"$NGX_USER\"" . auto/define
 have=NGX_GROUP value="\"$NGX_GROUP\"" . auto/define
 
+# 显 示 configure 执 行 的 结 果, 如 果 失 败, 则 给 出 原 因
 . auto/summary
