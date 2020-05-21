@@ -3,7 +3,6 @@
 ### 目录
 
 + [Nginx命令](#cmd)
-+ [obj目录说明](#obj)
 + [参考书籍](#book)
 
 ### Nginx命令 <span id="cmd"/>
