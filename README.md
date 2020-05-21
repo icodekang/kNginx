@@ -1,4 +1,4 @@
-# kNginx Nginx-1.0.14源码学习
+# Nginx-1.0.14源码学习
 
 ### 目录
 
@@ -30,28 +30,6 @@ nginx -s reopen                             #日志文件回滚
     ```
     - 启动新版本的Nginx,可以使用以上介绍过的任意一种启动方法.这是通过ps命令可以发现新旧版本的Nginx在同时运行
     - 通过kill命令向旧版本的master进程发送SIGQUIT信号,以优雅的方式关闭旧版本的Nginx.随后将只有新版本的Nginx服务运行,此时平滑升级完毕
-
-### obj目录说明 <span id="obj"/>
-+ obj目录结构
-```
-|---ngx_auto_headers.h   #保存些宏定义,会被src/core/ngx_config.h及src/os/unix/ngx_linux_config.h
-|---autoconf.err         #autoconf.err 保存configure执行过程中产生的结果
-|---ngx_auto_config.h    #保存些宏定义,会被src/core/ngx_config.h及src/os/unix/ngx_linux_config.h
-|---ngx_modules.c        #配置模块信息
-|---src                  #src目录用于存放编译时产生的目标文件
-|   |---core
-|   |---event
-|   |   |---modules
-|   |---os
-|   |   |---unix
-|   |   |---win32
-|   |---http
-|   |   |---modules
-|   |   |   |---perl
-|   |---mail
-|   |---misc
-|---Makefile            #Makefile文件用于编译Nginx工程以及在加入install参数后安装Nginx
-```
 
 ### 参考书籍 <span id="book"/>
 + [深入理解Nginx 提取码：uoxd](https://pan.baidu.com/s/1B9Nz81xfZta9m6Ip-eOmAA)
